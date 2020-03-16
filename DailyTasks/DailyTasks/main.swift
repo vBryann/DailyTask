@@ -47,32 +47,52 @@ func criarTask (){
     //print(Date().description(with: .current))
     let formater = DateFormatter()
     formater.dateFormat = "HH:mm"
-    
-    let dateAsString = "9:00"
+    var task: [(descricao: String, hora: String, tipo: String)] = []
+    print("Informe a descrição da task.")
+    if let descricaoInput = readLine(){
+    }
+    print("Informe o tipo da task. Ex: Estudos, Exercícios, Lazer etc.")
+    if let tipoInput = readLine(){
+    }
+    var dateAsString = "0:00"
+    print("Informe a hora da task. Ex: 12:00")
+    if let horaInput = readLine(){
+        var number: [Character] = []
+        for aux in horaInput {
+            number.append(aux)
+        }
+        let hour = String(number[0]) + String(number[1])
+        let minute = String(number[3]) + String(number[4])
+        
+        let hourInt = Int(hour)
+        let minuteInt = Int(minute)
+        
+        if (hourInt > 23)|| ( minuteInt > 59){
+            
+        }
+        //comparação de hora invalida
+        dateAsString = horaInput
+    }
     guard let date = formater.date(from: dateAsString) else { return }
     //é um option, então é preciso tratar
-    
     let hourFuture = Calendar.current.component(.hour, from: date)
     let minuteFuture = Calendar.current.component(.minute, from: date)
     // é possivel pegar a hora setada na variável date
-    
-    print(date.description(with: Locale(identifier: "pt-br")))
+
+    //print(date.description(with: Locale(identifier: "pt-br")))
     // converte  a hora no padrão pt-br
-    
     let datestr = formater.string(from: date)
     print("hora em string: ", datestr)
     print()
     
-    let hour = Calendar.current.component(.hour, from: Date())
-    let minutes = Calendar.current.component(.minute, from: Date())
-    print("Horário atual é \(hour):\(minutes)")
-//    let components = Calendar.current.dateComponents([.hour, .minute], from: someDate)
-//    let hour = components.hour ?? 0
-//    let minute = components.minute ?? 0
+    //let hour = Calendar.current.component(.hour, from: Date())
+    //let minutes = Calendar.current.component(.minute, from: Date())
+    //print("Horário atual é \(hour):\(minutes)")
+    //    let components = Calendar.current.dateComponents([.hour, .minute], from: someDate)
+    //    let hour = components.hour ?? 0
+    //    let minute = components.minute ?? 0
     
     print()
-    
-    var task: [(descricao: String, hora: String, tipo: String)] = []
     // cria um array de tasks organizadas em tuplas
     task.append(("Ir pro academy", "7:00", "Faculdade"))
     task.append(("Regar plantinhas", "15:00", "Casa"))
