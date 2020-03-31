@@ -8,6 +8,57 @@
 
 import Foundation
 
+
+public struct PersistenceManager {
+   
+   //Funcao que acessa o diretório Documents no Mac
+   func getDocumentsDirectory() -> URL {
+       let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+       return paths[0]
+   }
+   //Funcao que persiste dados em um arquivo
+   func write(data: Data, toFile path: String) {
+       let fm = FileManager.default
+       let filePath = getDocumentsDirectory().appendingPathComponent(path)
+       //cria o arquivo, ou caso exista ele sobrescreve o existente
+       let _ = fm.createFile(atPath: filePath.relativePath, contents: data, attributes: nil)
+
+    
+    //essa função reconhece se o arquivo existe e escreve no final da linha do mesmo
+        /*if fm.fileExists(atPath: filePath.path){
+            if let fileHandle = try? FileHandle(forWritingTo: filePath){
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                fileHandle.closeFile()
+
+            }
+        } else {
+               //Cria um arquivo no diretório especificado, e tenta escrever o conteudo em formato Data nesse arquivo.
+            let _ = fm.createFile(atPath: filePath.relativePath, contents: data, attributes: nil)
+        }*/
+    }
+   //Funcao que ler dados de um arquivo
+   func read(fromFile filename: String) -> Data? {
+       let fm = FileManager.default
+       let path = getDocumentsDirectory().appendingPathComponent(filename).relativePath
+       
+       //leitura do conteúdo de um diretório
+       let data = fm.contents(atPath: path)
+       return data //retorna o conteúdo lido
+   }
+   
+}
+
+
+struct Task: Codable{
+    var descricao: String
+    var tipo: String
+    var hora: String
+    
+}
+
+
+
 public func menu (){
     var condition = true
     print("""
@@ -55,6 +106,23 @@ public func menu (){
                     //case "2":
                     //editarTask()
                     //condition = false
+                    case "4": listarTask()
+                    var flag = true
+                    while flag {
+                        print("\nVocê quer continuar no programa? s/n")
+                        if let command2 = readLine(){
+                            switch command2{
+                            case "s","S":
+                                condition = true
+                                flag = false
+                            case "n","N":
+                                condition = false
+                                flag = false
+                            default:
+                                print("Comando inválido")
+                            }
+                        }
+                    }
                     case "5":
                     condition = false
                     break
@@ -66,50 +134,17 @@ public func menu (){
     }
 }
 
-func criarTask () throws{
+public func criarTask () throws{
     
     let formater = DateFormatter()
     formater.dateFormat = "HH:mm"
+    
     enum PersistenceError: Error {
        case deuRuimNaLeitura
        case deuRuimNaEscrita
     }
    
-    struct PersistenceManager {
-       
-       //Funcao que acessa o diretório Documents no Mac
-       func getDocumentsDirectory() -> URL {
-           let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-           return paths[0]
-       }
-       //Funcao que persiste dados em um arquivo
-       func write(data: Data, toFile path: String) -> Bool {
-           let fm = FileManager.default
-           let filePath = getDocumentsDirectory().appendingPathComponent(path).relativePath
-           
-           //Cria um arquivo no diretório especificado, e tenta escrever o conteudo em formato Data nesse arquivo.
-           let sucess = fm.createFile(atPath: filePath, contents: data, attributes: nil)
-           return sucess // retorna se a escrita foi bem sucedida
-       }
-       
-       //Funcao que ler dados de um arquivo
-       func read(fromFile filename: String) -> Data? {
-           let fm = FileManager.default
-           let path = getDocumentsDirectory().appendingPathComponent(filename).relativePath
-           
-           //leitura do conteúdo de um diretório
-           let data = fm.contents(atPath: path)
-           return data //retorna o conteúdo lido
-       }
-       
-    }
     
-    struct Task: Codable{
-        var descricao: String
-        var tipo: String
-        var hora: String
-        
-    }
     
     
     print("\nInforme a descrição da task.")
@@ -138,95 +173,92 @@ func criarTask () throws{
                     //Pode ser mudado pra tratamento de errors
                     continue
                 }else{
-                    //dateAsString = horaInput
-                    //guard let date = formater.date(from: dateAsString) else { return }
-                    //é um option, então é preciso tratar
-                    //let hourFuture = Calendar.current.component(.hour, from: date)
-                    //let minuteFuture = Calendar.current.component(.minute, from: date)
-                    // é possivel pegar a hora setada na variável date
-                    //task.append((descricaoInput,tipoInput,horaInput))
+                    //Para guardar o valor
                     let manager = PersistenceManager()
+                    let encoder = JSONEncoder()
                     
+                    //a task mais recente
                     let task = Task(descricao:descricaoInput,tipo:tipoInput,hora:horaInput)
                     
-                    let encoder = JSONEncoder()
-                    if let encoded = try? encoder.encode(task){
-                        //Aqui faz o encoding da Struct
-                        if let json = String(data: encoded, encoding: .utf8) {
-                            guard let data = json.data(using: .utf8) else{
-                                print("Converter content para Data retornou nulo!")
-                                throw PersistenceError.deuRuimNaLeitura
+                    var arrayData : [Task] = []
+                    //leitura dos dados pra caso exista um arquivo
+                    let readData : Data? = manager.read(fromFile: "arquivo.json")
+                    if (readData != nil) {
+                        let decoder = JSONDecoder()
+                        let taskReceived = try decoder.decode([Task].self,
+                                                      from: readData!)
+                        //após receber os arquivos, salva num array os dados existentes com o novo
+                        arrayData.append(contentsOf: taskReceived)
+                        arrayData.append(task)
+                        
+                        if let array = try? encoder.encode(arrayData){
+                        
+                            if let json = String(data: array, encoding: .utf8){
+                                guard let data = json.data(using: .utf8) else{
+                                    print("Converter content para Data retornou nulo!")
+                                    throw PersistenceError.deuRuimNaLeitura
+                                }
+                                //"Update" com os dados atuais
+                                let _ = manager.write(data: data, toFile: "arquivo.json")
+                                print("Bem sucedido")
                             }
-                            let success = manager.write(data: data, toFile: "arquivo.json")
-                            print("Bem sucedido:",success)
                         }
+                        
+                    }else {
+                        arrayData.append(task)
+                        if let array = try? encoder.encode(arrayData){
+                              //Aqui faz o encoding da Struct
+                              if let json = String(data: array, encoding: .utf8) {
+                                  guard let data = json.data(using: .utf8) else{
+                                      print("Converter content para Data retornou nulo!")
+                                      throw PersistenceError.deuRuimNaLeitura
+                                  }
+                                  
+                                  let _ = manager.write(data: data, toFile: "arquivo.json")
+                                  print("Bem sucedido")
+                              }
+                      
+                          }
+                    }
+                    
                     break
-                
                 }
-        
             }
         }
     }
-    //print(date.description(with: Locale(identifier: "pt-br")))
-    // converte  a hora no padrão pt-br
-    //let datestr = formater.string(from: date)
-    //print("hora em string: ", datestr)
-    //print()
-    
-    //let hour = Calendar.current.component(.hour, from: Date())
-    //let minutes = Calendar.current.component(.minute, from: Date())
-    //print("Horário atual é \(hour):\(minutes)")
-    //    let components = Calendar.current.dateComponents([.hour, .minute], from: someDate)
-    //    let hour = components.hour ?? 0
-    //    let minute = components.minute ?? 0
-    
-    //print()
-    // cria um array de tasks organizadas em tuplas
-    //task.append(("Ir pro academy", "7:00", "Faculdade"))
-    //task.append(("Regar plantinhas", "15:00", "Casa"))
-    // teste pra adicionar algumas tasks
-    //print(task[0].descricao)
-    // imprime só a descriçao
-    //print(task) //-- imprime tudo ex:(descricao: "Ir pro academy", hora: "7:00", tipo: "Faculdade")
-   
-    
 }
-/*func editarTask () throws{
-           let decoder = JSONDecoder()
-        //Aqui faz o decoding da Struct
-           if let decoded = try? decoder.decode(Task.self, from: encoded) {
-               print(decoded)
-           }
-    }*/
-    // Aqui, no caso de JSON, você usa o JSONEncoder() pra converter uma Struct que está em conformidade com o protocolo Encodable para o tipo Data?. O guard let darante que essa conversão deu certo e Data não é nil. Lembrando que Codable é a junção de ambos protocolos, Encodable e Decodable.
 
-    //Conversão da String content para o tipo Data
+public func listarTask(){
+    
+    let manager = PersistenceManager()
    
+    
+    
+    let readData: Data? = manager.read(fromFile: "arquivo.json")
+      do {
+          let decoder = JSONDecoder()
+          let task = try decoder.decode([Task].self,from: readData!) //entre [] pra representar o array de Tasks
+        print("\n\(task)")
 
-    // chamando a função write para criar um arquivo
+      } catch let parsingError {
 
-    // chamando a função read para ler o conteúdo do arquivo e retorná-lo em formato Data?
-    //let readData: Data? = manager.read(fromFile: "arquivo.txt")
+          print("Error", parsingError)
 
-    //Aqui você pode usar o data pra construir um struct com JSONDecoder() e retorná-lo na função.
-    //Decode Data? -> AlgumaStruct, essa struct sendo Decodable. Lembrando que Codable é Encodable e Decodable ao mesmo tempo.
-
-    //Nesse exemplo, estamos lendo e retornando dados do tipo String
-    //Se data nao for nula e for convertível para String, converte pra string e printa
-    //if let readData = readData, let stringFromData = String(data: readData, encoding: .utf8) {
-      //  print(stringFromData)
-    //} else {
+      }
+    
+    /*if let readData = readData, let stringFromData = String(data: readData, encoding: .utf8) {
+        print(stringFromData)
+      } else {
         //Se nao, printa que houve algum problema
-    //    print("Nao foi possivel converter data para o tipo String!")
-    //}
+        print("Nao foi possivel converter data para o tipo String!")
+        }
+        */
     
 }
-
-
-
-
+    
 
 menu()
+
 
 
 
