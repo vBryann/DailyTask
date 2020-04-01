@@ -88,7 +88,7 @@ public func menu (){
     }
     print("""
 
-        Bem vindo ao DailyTask, onde você pode organizar suas atividades diárias!
+    Bem vindo ao DailyTask, onde você pode organizar suas atividades diárias!
 
     """)
     while condition{
@@ -96,19 +96,19 @@ public func menu (){
         if readLine() != nil  {
             print("""
 
-        ==================== Menu =====================
-        ||                                           ||
-        ||                                           ||
-        ||               1. Criar Task               ||
-        ||               2. Editar Task              ||
-        ||               3. Completar Task           ||
-        ||               4. Listar Task              ||
-        ||                                           ||
-        ||               5. Sair                     ||
-        ||                                           ||
-        ===============================================
+                ==================== Menu =====================
+                ||                                           ||
+                ||                                           ||
+                ||               1. Criar Task               ||
+                ||               2. Editar Task              ||
+                ||               3. Completar Task           ||
+                ||               4. Listar Task              ||
+                ||                                           ||
+                ||               5. Sair                     ||
+                ||                                           ||
+                ===============================================
 
-    """)
+            """)
             if let command = readLine(){
                 switch command{
                     case "1": try? criarTask()
@@ -237,7 +237,7 @@ public func listarTask() -> Bool{
                 """)
             var count = 1
             for tarefa in task{
-                print("\(count) - Foco de \(tarefa.descricao), do tipo \(tarefa.tipo), às \(tarefa.hora), status \(tarefa.status)")
+                print("\(count) -  \(tarefa.descricao), do tipo \(tarefa.tipo), às \(tarefa.hora), status \(tarefa.status)")
                 count += 1
             }
         
@@ -278,7 +278,7 @@ public func editarTask(){
                 arrayData.append(contentsOf: task)
                 let chooseTask = arrayData[numTasked - 1]
                 
-                print("\nTask a ser editada: Foco de \(chooseTask.descricao), do tipo \(chooseTask.tipo), às \(chooseTask.hora), status \(chooseTask.status)")
+                print("\nTask a ser editada:  \(chooseTask.descricao), do tipo \(chooseTask.tipo), às \(chooseTask.hora), status \(chooseTask.status)")
                 print("\nInforme a descrição da task a ser editada:")
                 if let descricaoInput = readLine(){
                     
