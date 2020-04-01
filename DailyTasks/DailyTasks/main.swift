@@ -54,13 +54,38 @@ struct Task: Codable{
     var descricao: String
     var tipo: String
     var hora: String
+    var status: String
     
 }
+
+enum PersistenceError: Error {
+   case deuRuimNaLeitura
+   case deuRuimNaEscrita
+}
+
 
 
 
 public func menu (){
     var condition = true
+    func repete (){
+        var flag = true
+        while flag {
+            print("\nVocê quer continuar no programa? s/n")
+            if let command2 = readLine(){
+                switch command2{
+                case "s","S":
+                    condition = true
+                    flag = false
+                case "n","N":
+                    condition = false
+                    flag = false
+                default:
+                    print("Comando inválido")
+                }
+            }
+        }
+    }
     print("""
 
         Bem vindo ao DailyTask, onde você pode organizar suas atividades diárias!
@@ -71,58 +96,29 @@ public func menu (){
         if readLine() != nil  {
             print("""
 
-        ---------------------Menu---------------------
-
-
-        1. Criar Task
-        2. Editar Task
-        3. Completar Task
-        4. Listar Task
-
-        5. Sair
-
-        ----------------------------------------------
+        ==================== Menu =====================
+        ||                                           ||
+        ||                                           ||
+        ||               1. Criar Task               ||
+        ||               2. Editar Task              ||
+        ||               3. Completar Task           ||
+        ||               4. Listar Task              ||
+        ||                                           ||
+        ||               5. Sair                     ||
+        ||                                           ||
+        ===============================================
 
     """)
             if let command = readLine(){
                 switch command{
                     case "1": try? criarTask()
-                        var flag = true
-                        while flag {
-                            print("\nVocê quer continuar no programa? s/n")
-                            if let command2 = readLine(){
-                                switch command2{
-                                case "s","S":
-                                    condition = true
-                                    flag = false
-                                case "n","N":
-                                    condition = false
-                                    flag = false
-                                default:
-                                    print("Comando inválido")
-                                }
-                            }
-                        }
-                    //case "2":
-                    //editarTask()
-                    //condition = false
-                    case "4": listarTask()
-                    var flag = true
-                    while flag {
-                        print("\nVocê quer continuar no programa? s/n")
-                        if let command2 = readLine(){
-                            switch command2{
-                            case "s","S":
-                                condition = true
-                                flag = false
-                            case "n","N":
-                                condition = false
-                                flag = false
-                            default:
-                                print("Comando inválido")
-                            }
-                        }
-                    }
+                        repete()
+                    case "2": editarTask()
+                        repete()
+                    case "4": let _ = listarTask()
+                        repete()
+                    case "3": completarTask()
+                        repete()
                     case "5":
                     condition = false
                     break
@@ -138,15 +134,9 @@ public func criarTask () throws{
     
     let formater = DateFormatter()
     formater.dateFormat = "HH:mm"
+       
     
-    enum PersistenceError: Error {
-       case deuRuimNaLeitura
-       case deuRuimNaEscrita
-    }
-   
-    
-    
-    
+
     print("\nInforme a descrição da task.")
     if let descricaoInput = readLine(){
         
@@ -178,7 +168,7 @@ public func criarTask () throws{
                     let encoder = JSONEncoder()
                     
                     //a task mais recente
-                    let task = Task(descricao:descricaoInput,tipo:tipoInput,hora:horaInput)
+                    let task = Task(descricao:descricaoInput,tipo:tipoInput,hora:horaInput,status:"🟥")
                     
                     var arrayData : [Task] = []
                     //leitura dos dados pra caso exista um arquivo
@@ -195,12 +185,12 @@ public func criarTask () throws{
                         
                             if let json = String(data: array, encoding: .utf8){
                                 guard let data = json.data(using: .utf8) else{
-                                    print("Converter content para Data retornou nulo!")
+                                    print("\nConverter content para Data retornou nulo!")
                                     throw PersistenceError.deuRuimNaLeitura
                                 }
                                 //"Update" com os dados atuais
                                 let _ = manager.write(data: data, toFile: "arquivo.json")
-                                print("Bem sucedido")
+                                print("\nOperação realizada com sucesso!")
                             }
                         }
                         
@@ -210,12 +200,12 @@ public func criarTask () throws{
                               //Aqui faz o encoding da Struct
                               if let json = String(data: array, encoding: .utf8) {
                                   guard let data = json.data(using: .utf8) else{
-                                      print("Converter content para Data retornou nulo!")
+                                      print("\nConverter content para Data retornou nulo!")
                                       throw PersistenceError.deuRuimNaLeitura
                                   }
                                   
                                   let _ = manager.write(data: data, toFile: "arquivo.json")
-                                  print("Bem sucedido")
+                                  print("\nOperação realizada com sucesso!")
                               }
                       
                           }
@@ -228,24 +218,39 @@ public func criarTask () throws{
     }
 }
 
-public func listarTask(){
+public func listarTask() -> Bool{
     
     let manager = PersistenceManager()
    
     
     
     let readData: Data? = manager.read(fromFile: "arquivo.json")
-      do {
-          let decoder = JSONDecoder()
-          let task = try decoder.decode([Task].self,from: readData!) //entre [] pra representar o array de Tasks
-        print("\n\(task)")
+    if (readData != nil){
+        do {
+              let decoder = JSONDecoder()
+              let task = try decoder.decode([Task].self,from: readData!) //entre [] pra representar o array de Tasks
+            //let count = task.count
+            print("""
 
-      } catch let parsingError {
+                Tasks para hoje:
+                
+                """)
+            var count = 1
+            for tarefa in task{
+                print("\(count) - Foco de \(tarefa.descricao), do tipo \(tarefa.tipo), às \(tarefa.hora), status \(tarefa.status)")
+                count += 1
+            }
+        
+        } catch let parsingError {
 
           print("Error", parsingError)
-
-      }
-    
+            
+        }
+        return true
+    }else {
+        print("Você não tem tasks ainda!")
+        return false
+    }
     /*if let readData = readData, let stringFromData = String(data: readData, encoding: .utf8) {
         print(stringFromData)
       } else {
@@ -255,7 +260,124 @@ public func listarTask(){
         */
     
 }
-    
+
+public func editarTask(){
+    let manager = PersistenceManager()
+    let condition = listarTask()
+    if condition {
+        print("\nQual task você deseja editar? Digite o número da task:")
+        var arrayData : [Task] = []
+        
+        if let numTask = readLine(){
+            let numTasked: Int! = Int(numTask)
+            let readData: Data? = manager.read(fromFile: "arquivo.json")
+            do {
+                let decoder = JSONDecoder()
+                let task = try decoder.decode([Task].self,from: readData!)
+                
+                arrayData.append(contentsOf: task)
+                let chooseTask = arrayData[numTasked - 1]
+                
+                print("\nTask a ser editada: Foco de \(chooseTask.descricao), do tipo \(chooseTask.tipo), às \(chooseTask.hora), status \(chooseTask.status)")
+                print("\nInforme a descrição da task a ser editada:")
+                if let descricaoInput = readLine(){
+                    
+                    print("\nInforme o tipo da task a ser editada: (Ex: Estudos, Exercícios, Lazer etc.)")
+                    if let tipoInput = readLine(){
+                    
+                        //var dateAsString = "0:00"
+                        print("\nInforme a hora da task a ser editada: (Ex: 12:00)")
+                        while let horaInput = readLine(){
+                            var number: [Character] = []
+                            //separando os caracteres da hora para fazer o tratamento
+                            for aux in horaInput {
+                                number.append(aux)
+                            }
+                            let hour = String(number[0]) + String(number[1])
+                            let minute = String(number[3]) + String(number[4])
+                           //transformando os chars separados em int
+                            let hourInt = Int(hour)
+                            let minuteInt = Int(minute)
+                            
+                            //comparação de hora invalida
+                            if (hourInt! > 23) || ( minuteInt! > 59){
+                                print("\nHorário inválido, tente novamente.")
+                                //Pode ser mudado pra tratamento de errors
+                                continue
+                            }else{
+                                let task = Task(descricao:descricaoInput,tipo:tipoInput,hora:horaInput,status:"🟥")
+                                arrayData[numTasked - 1] = task
+                                let encoder = JSONEncoder()
+                                if let array = try? encoder.encode(arrayData){
+                                
+                                    if let json = String(data: array, encoding: .utf8){
+                                        guard let data = json.data(using: .utf8) else{
+                                            print("\nConverter content para Data retornou nulo!")
+                                            throw PersistenceError.deuRuimNaLeitura
+                                        }
+                                        //"Update" com os dados atuais
+                                        let _ = manager.write(data: data, toFile: "arquivo.json")
+                                        print("\nOperação realizada com sucesso!")
+                                    }
+                                    
+                                }
+                            }
+                            break
+                
+                        }
+                    }
+                }
+                
+            }catch let parsingError {
+
+                print("Error", parsingError)
+
+            }
+        
+        }
+    }
+}
+
+func completarTask(){
+    let manager = PersistenceManager()
+    let condition = listarTask()
+    if condition {
+        print("\nQual task você deseja concluir? Digite o número da task:")
+        var arrayData : [Task] = []
+        
+        if let numTask = readLine(){
+            let numTasked: Int! = Int(numTask)
+            let readData: Data? = manager.read(fromFile: "arquivo.json")
+            do {
+                let decoder = JSONDecoder()
+                let task = try decoder.decode([Task].self,from: readData!)
+                
+                arrayData.append(contentsOf: task)
+                arrayData[numTasked - 1].status = "✅"
+                let encoder = JSONEncoder()
+                if let array = try? encoder.encode(arrayData){
+                
+                    if let json = String(data: array, encoding: .utf8){
+                        guard let data = json.data(using: .utf8) else{
+                            print("\nConverter content para Data retornou nulo!")
+                            throw PersistenceError.deuRuimNaLeitura
+                        }
+                        //"Update" com os dados atuais
+                        let _ = manager.write(data: data, toFile: "arquivo.json")
+                        print("\nOperação realizada com sucesso!")
+                    }
+                    
+                }
+                
+                
+            }catch let parsingError {
+
+                print("Error", parsingError)
+
+            }
+        }
+    }
+}
 
 menu()
 
