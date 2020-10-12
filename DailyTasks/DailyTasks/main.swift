@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct PersistenceManager {
    
    //Funcao que acessa o diretório Documents no Mac
@@ -22,20 +21,6 @@ public struct PersistenceManager {
        let filePath = getDocumentsDirectory().appendingPathComponent(path)
        //cria o arquivo, ou caso exista ele sobrescreve o existente
        let _ = fm.createFile(atPath: filePath.relativePath, contents: data, attributes: nil)
-
-    
-    //essa função reconhece se o arquivo existe e escreve no final da linha do mesmo
-        /*if fm.fileExists(atPath: filePath.path){
-            if let fileHandle = try? FileHandle(forWritingTo: filePath){
-                fileHandle.seekToEndOfFile()
-                fileHandle.write(data)
-                fileHandle.closeFile()
-
-            }
-        } else {
-               //Cria um arquivo no diretório especificado, e tenta escrever o conteudo em formato Data nesse arquivo.
-            let _ = fm.createFile(atPath: filePath.relativePath, contents: data, attributes: nil)
-        }*/
     }
    //Funcao que ler dados de um arquivo
    func read(fromFile filename: String) -> Data? {
@@ -49,8 +34,7 @@ public struct PersistenceManager {
    
 }
 
-
-struct Task: Codable{
+struct Task: Codable {
     var descricao: String
     var tipo: String
     var hora: String
@@ -63,17 +47,14 @@ enum PersistenceError: Error {
    case deuRuimNaEscrita
 }
 
-
-
-
-public func menu (){
+public func menu () {
     var condition = true
-    func repete (){
+    func repete () {
         var flag = true
         while flag {
             print("\nVocê quer continuar no programa? s/n")
-            if let command2 = readLine(){
-                switch command2{
+            if let command2 = readLine() {
+                switch command2 {
                 case "s","S":
                     condition = true
                     flag = false
@@ -91,7 +72,7 @@ public func menu (){
     Bem vindo ao DailyTask, onde você pode organizar suas atividades diárias!
 
     """)
-    while condition{
+    while condition {
         print("\nClique em alguma tecla para continuar.")
         if readLine() != nil  {
             print("""
@@ -130,7 +111,7 @@ public func menu (){
     }
 }
 
-public func criarTask () throws{
+public func criarTask () throws {
     
     let formater = DateFormatter()
     formater.dateFormat = "HH:mm"
@@ -138,14 +119,14 @@ public func criarTask () throws{
     
 
     print("\nInforme a descrição da task.")
-    if let descricaoInput = readLine(){
+    if let descricaoInput = readLine() {
         
         print("\nInforme o tipo da task. Ex: Estudos, Exercícios, Lazer etc.")
-        if let tipoInput = readLine(){
+        if let tipoInput = readLine() {
         
             //var dateAsString = "0:00"
             print("\nInforme a hora da task. Ex: 12:00")
-            while let horaInput = readLine(){
+            while let horaInput = readLine() {
                 var number: [Character] = []
                 //separando os caracteres da hora para fazer o tratamento
                 for aux in horaInput {
@@ -158,11 +139,11 @@ public func criarTask () throws{
                 let minuteInt = Int(minute)
                 
                 //comparação de hora invalida
-                if (hourInt! > 23) || ( minuteInt! > 59){
+                if (hourInt! > 23) || ( minuteInt! > 59) {
                     print("\nHorário inválido, tente novamente.")
                     //Pode ser mudado pra tratamento de errors
                     continue
-                }else{
+                } else {
                     //Para guardar o valor
                     let manager = PersistenceManager()
                     let encoder = JSONEncoder()
@@ -181,9 +162,9 @@ public func criarTask () throws{
                         arrayData.append(contentsOf: taskReceived)
                         arrayData.append(task)
                         
-                        if let array = try? encoder.encode(arrayData){
+                        if let array = try? encoder.encode(arrayData) {
                         
-                            if let json = String(data: array, encoding: .utf8){
+                            if let json = String(data: array, encoding: .utf8) {
                                 guard let data = json.data(using: .utf8) else{
                                     print("\nConverter content para Data retornou nulo!")
                                     throw PersistenceError.deuRuimNaLeitura
@@ -194,12 +175,12 @@ public func criarTask () throws{
                             }
                         }
                         
-                    }else {
+                    } else {
                         arrayData.append(task)
-                        if let array = try? encoder.encode(arrayData){
+                        if let array = try? encoder.encode(arrayData) {
                               //Aqui faz o encoding da Struct
                               if let json = String(data: array, encoding: .utf8) {
-                                  guard let data = json.data(using: .utf8) else{
+                                  guard let data = json.data(using: .utf8) else {
                                       print("\nConverter content para Data retornou nulo!")
                                       throw PersistenceError.deuRuimNaLeitura
                                   }
@@ -218,14 +199,14 @@ public func criarTask () throws{
     }
 }
 
-public func listarTask() -> Bool{
+public func listarTask() -> Bool {
     
     let manager = PersistenceManager()
    
     
     
     let readData: Data? = manager.read(fromFile: "arquivo.json")
-    if (readData != nil){
+    if (readData != nil) {
         do {
               let decoder = JSONDecoder()
               let task = try decoder.decode([Task].self,from: readData!) //entre [] pra representar o array de Tasks
@@ -251,24 +232,17 @@ public func listarTask() -> Bool{
         print("Você não tem tasks ainda!")
         return false
     }
-    /*if let readData = readData, let stringFromData = String(data: readData, encoding: .utf8) {
-        print(stringFromData)
-      } else {
-        //Se nao, printa que houve algum problema
-        print("Nao foi possivel converter data para o tipo String!")
-        }
-        */
     
 }
 
-public func editarTask(){
+public func editarTask() {
     let manager = PersistenceManager()
     let condition = listarTask()
     if condition {
         print("\nQual task você deseja editar? Digite o número da task:")
         var arrayData : [Task] = []
         
-        if let numTask = readLine(){
+        if let numTask = readLine() {
             let numTasked: Int! = Int(numTask)
             let readData: Data? = manager.read(fromFile: "arquivo.json")
             do {
@@ -280,14 +254,14 @@ public func editarTask(){
                 
                 print("\nTask a ser editada:  \(chooseTask.descricao), do tipo \(chooseTask.tipo), às \(chooseTask.hora), status \(chooseTask.status)")
                 print("\nInforme a descrição da task a ser editada:")
-                if let descricaoInput = readLine(){
+                if let descricaoInput = readLine() {
                     
                     print("\nInforme o tipo da task a ser editada: (Ex: Estudos, Exercícios, Lazer etc.)")
-                    if let tipoInput = readLine(){
+                    if let tipoInput = readLine() {
                     
                         //var dateAsString = "0:00"
                         print("\nInforme a hora da task a ser editada: (Ex: 12:00)")
-                        while let horaInput = readLine(){
+                        while let horaInput = readLine() {
                             var number: [Character] = []
                             //separando os caracteres da hora para fazer o tratamento
                             for aux in horaInput {
@@ -300,18 +274,18 @@ public func editarTask(){
                             let minuteInt = Int(minute)
                             
                             //comparação de hora invalida
-                            if (hourInt! > 23) || ( minuteInt! > 59){
+                            if (hourInt! > 23) || ( minuteInt! > 59) {
                                 print("\nHorário inválido, tente novamente.")
                                 //Pode ser mudado pra tratamento de errors
                                 continue
-                            }else{
+                            } else {
                                 let task = Task(descricao:descricaoInput,tipo:tipoInput,hora:horaInput,status:"🟥")
                                 arrayData[numTasked - 1] = task
                                 let encoder = JSONEncoder()
-                                if let array = try? encoder.encode(arrayData){
+                                if let array = try? encoder.encode(arrayData) {
                                 
-                                    if let json = String(data: array, encoding: .utf8){
-                                        guard let data = json.data(using: .utf8) else{
+                                    if let json = String(data: array, encoding: .utf8) {
+                                        guard let data = json.data(using: .utf8) else {
                                             print("\nConverter content para Data retornou nulo!")
                                             throw PersistenceError.deuRuimNaLeitura
                                         }
@@ -328,7 +302,7 @@ public func editarTask(){
                     }
                 }
                 
-            }catch let parsingError {
+            } catch let parsingError {
 
                 print("Error", parsingError)
 
@@ -338,14 +312,14 @@ public func editarTask(){
     }
 }
 
-func completarTask(){
+func completarTask() {
     let manager = PersistenceManager()
     let condition = listarTask()
     if condition {
         print("\nQual task você deseja concluir? Digite o número da task:")
         var arrayData : [Task] = []
         
-        if let numTask = readLine(){
+        if let numTask = readLine() {
             let numTasked: Int! = Int(numTask)
             let readData: Data? = manager.read(fromFile: "arquivo.json")
             do {
@@ -355,9 +329,9 @@ func completarTask(){
                 arrayData.append(contentsOf: task)
                 arrayData[numTasked - 1].status = "✅"
                 let encoder = JSONEncoder()
-                if let array = try? encoder.encode(arrayData){
+                if let array = try? encoder.encode(arrayData) {
                 
-                    if let json = String(data: array, encoding: .utf8){
+                    if let json = String(data: array, encoding: .utf8) {
                         guard let data = json.data(using: .utf8) else{
                             print("\nConverter content para Data retornou nulo!")
                             throw PersistenceError.deuRuimNaLeitura
@@ -380,10 +354,3 @@ func completarTask(){
 }
 
 menu()
-
-
-
-
-
-
-
